@@ -13,3 +13,14 @@ NEWSPIDER_MODULE = 'scrapy100.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'scrapy100 (+http://www.yourdomain.com)'
+
+ITEM_PIPELINES = ['scrapy100.pipelines.Scrapy100Pipeline']
+
+DATABASE = {
+    'drivername': 'mysql',
+    'host': '',
+    'port': 3306,
+    'username': 'root',
+    'password': '......',
+    'database': 'scrapy100'
+}

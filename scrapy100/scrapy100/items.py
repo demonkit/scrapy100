@@ -1,6 +1,11 @@
 from scrapy.item import Item, Field
 
 
-class TitleItem(Item):
+class WebSite(Item):
+    url = Field()
     title = Field()
-    link = Field()
+    desc = Field()
+
+
+class Keyword(Item):
+    keyword = Field()
