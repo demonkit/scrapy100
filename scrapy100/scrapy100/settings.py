@@ -16,11 +16,22 @@ NEWSPIDER_MODULE = 'scrapy100.spiders'
 
 ITEM_PIPELINES = ['scrapy100.pipelines.Scrapy100Pipeline']
 
-DATABASE = {
-    'drivername': 'mysql',
-    'host': '',
-    'port': 3306,
-    'username': 'root',
-    'password': '......',
-    'database': 'scrapy100'
-}
+
+DB_DRIVERNAME = 'mysql'
+DB_HOST = ''
+DB_PORT = 3306
+DB_USERNAME = 'root'
+DB_PASSWORD = '....'
+DB_NAME = 'scrapy100'
+DB_CHARSET = 'utf8'
+
+
+DB_DIALECT = "%s://%s:%s@%s:%s/%s?charset=%s" % (
+    DB_DRIVERNAME,
+    DB_USERNAME,
+    DB_PASSWORD,
+    DB_HOST,
+    DB_PORT,
+    DB_NAME,
+    DB_CHARSET,
+)

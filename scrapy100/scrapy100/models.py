@@ -12,7 +12,7 @@ DeclarativeBase = declarative_base()
 
 
 def db_connect():
-    return sqlalchemy.create_engine(URL(**settings.DATABASE))
+    return sqlalchemy.create_engine(settings.DB_DIALECT, echo=True)
 
 
 def createTable(engine):

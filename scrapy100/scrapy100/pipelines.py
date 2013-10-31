@@ -1,7 +1,5 @@
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+# -*- coding: utf-8 -*-
+import json
 
 
 from sqlalchemy.orm import sessionmaker
@@ -19,18 +17,21 @@ class Scrapy100Pipeline(object):
 
     def process_item(self, item, spider):
         session = self.Session()
-        if isinstance(item, items.WebSite):
-            obj = models.WebSite(**item)
-        elif isinstance(item, items.Keyword):
-            obj = models.Keyword(**item)
-        else:
+        if not isinstance(item, items.WebSite):
             raise DropItem("type error, drop url: %s" % item['url'])
+        objs = []
+        web_site = models.WebSite(
+                url=item['url'], title=item['title'],
+                desc=json.dumps(item['desc']))
+        objs.append(web_site)
+        for kw in item['keywords']:
+            objs.append(models.Keyword(keyword=kw))
         try:
-            session.add(obj)
+            session.add_all(objs)
             session.commit()
         except Exception, e:
             session.rollback()
-            raise DropItem("db error, drop url: %s" % item['url'])
+            raise DropItem("db error, drop url: %s, since: %s" % (item['url'], e))
         finally:
             session.close()
         return item
