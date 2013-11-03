@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sqlalchemy
-from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 import settings
 
@@ -12,20 +12,42 @@ DeclarativeBase = declarative_base()
 
 
 def db_connect():
-    return sqlalchemy.create_engine(settings.DB_DIALECT, echo=True)
+    return sqlalchemy.create_engine(settings.DB_DIALECT)
 
 
 def createTable(engine):
     DeclarativeBase.metadata.create_all(engine)
 
 
+site_keyword = sqlalchemy.Table("site_keyword", DeclarativeBase.metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("sid", sqlalchemy.Integer, sqlalchemy.ForeignKey("website.id")),
+    sqlalchemy.Column("kid", sqlalchemy.Integer, sqlalchemy.ForeignKey("keyword.id"))
+)
+
+
 class WebSite(DeclarativeBase):
     __tablename__ = 'website'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    url = sqlalchemy.Column('url', sqlalchemy.String(256))
+    domain = sqlalchemy.Column('domain', sqlalchemy.String(256))
     title = sqlalchemy.Column('title', sqlalchemy.String(1000), nullable=True)
-    desc = sqlalchemy.Column('desc', sqlalchemy.String(1000), nullable=True)
+
+    req_url = sqlalchemy.Column('req_url', sqlalchemy.String(1024))
+    resp_code = sqlalchemy.Column(sqlalchemy.Integer)
+    # if spider gets a redirect status, url field will be set
+    url = sqlalchemy.Column('url', sqlalchemy.String(1024))
+    desc = sqlalchemy.Column('desc', sqlalchemy.String(10000), nullable=True)
+    scrap_done = sqlalchemy.Column('done', sqlalchemy.Integer, default=0)
+
+    keywords = relationship("Keyword", secondary=site_keyword, backref="parent")
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    @staticmethod
+    def get(session, domain):
+        return session.query(WebSite).filter(WebSite.domain==domain).first()
 
 
 class Keyword(DeclarativeBase):
@@ -33,3 +55,13 @@ class Keyword(DeclarativeBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     keyword = sqlalchemy.Column('keyword', sqlalchemy.String(256))
+
+    def __init__(self, kw):
+        self.keyword = kw
+
+    @staticmethod
+    def get(session, kw):
+        obj = session.query(Keyword).filter(Keyword.keyword==kw).first()
+        if not obj:
+            obj = Keyword(kw)
+        return obj

@@ -3,23 +3,50 @@
 
 import codecs
 
+import gurl
 from scrapy.spider import BaseSpider
 from scrapy.selector import HtmlXPathSelector
+from sqlalchemy.orm import sessionmaker
 
-from scrapy100.items import WebSite
+from scrapy100 import items
+from scrapy100 import models
+
+def getWebSites():
+    engine = models.db_connect()
+    session = sessionmaker(bind=engine)()
+    return session.query(models.WebSite).filter(models.WebSite.scrap_done==0)
+
+
+def cookUrls(websites):
+    start_urls = []
+    for site in websites:
+        url = site.url
+        if not url:
+            continue
+        start_urls.append(url)
+    return start_urls
+
+
+def cookDomains(urls):
+    domains = []
+    for u in urls:
+        domains.append(gurl.Url(u).host.domain)
+    return domains
 
 
 class KeywordSpider(BaseSpider):
     name = 'keyword'
-    allowed_domains = ['http://www.cmbc.com.cn']
-    start_urls = allowed_domains
+    try:
+        start_urls = cookUrls(getWebSites())
+        allowed_domains = cookDomains(start_urls)
+    except:
+        start_urls = []
+        allowed_domains = []
 
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
-        # parse title
-        web_item = WebSite()
-        web_item['url'] = response.url
-        web_item['title'] = hxs.select("/html/head/title/text()")[0].extract()
+        web_item = items.WebSite()
+        web_item['req_url'] = response.url
         web_item['desc'] = []
         web_item['keywords'] = []
 

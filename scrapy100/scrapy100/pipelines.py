@@ -17,21 +17,42 @@ class Scrapy100Pipeline(object):
 
     def process_item(self, item, spider):
         session = self.Session()
-        if not isinstance(item, items.WebSite):
+        if isinstance(item, items.WebSite):
+            self._processWebSite(item, spider)
+        elif isinstance(item, items.BankUrl):
+            self._processBankUrl(item, spider)
+        else:
             raise DropItem("type error, drop url: %s" % item['url'])
-        objs = []
-        web_site = models.WebSite(
-                url=item['url'], title=item['title'],
-                desc=json.dumps(item['desc']))
-        objs.append(web_site)
-        for kw in item['keywords']:
-            objs.append(models.Keyword(keyword=kw))
+
+    def _processWebSite(self, item, spider):
+        session = self.Session()
         try:
-            session.add_all(objs)
+            web_site = models.WebSite.get(session, url=item['url'])
+            web_site.desc=json.dumps(item['desc'])
+            web_site.scrap_done = 1
+            for kw in item['keywords']:
+                web_site.keywords.append(
+                        models.Keyword.get(session, kw))
+            session.add(web_site)
             session.commit()
         except Exception, e:
             session.rollback()
             raise DropItem("db error, drop url: %s, since: %s" % (item['url'], e))
+        finally:
+            session.close()
+        return item
+
+    def _processBankUrl(self, item, spider):
+        session = self.Session()
+        try:
+            web_site = models.WebSite(domain=item['domain'])
+            web_site.title=item['title']
+            web_site.scrap_done = 0
+            session.add(web_site)
+            session.commit()
+        except Exception, e:
+            session.rollback()
+            raise DropItem("db error, drop url: %s, since: %s" % (item['domain'], e))
         finally:
             session.close()
         return item
