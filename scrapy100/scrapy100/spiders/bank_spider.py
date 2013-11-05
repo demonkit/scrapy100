@@ -7,6 +7,7 @@ from scrapy.spider import BaseSpider
 from scrapy.selector import HtmlXPathSelector
 
 from scrapy100.items import BankUrl
+from scrapy100 import utils
 
 
 class BankSpider(BaseSpider):
@@ -26,7 +27,9 @@ class BankSpider(BaseSpider):
             if not url_attr:
                 bank = BankUrl()
             else:
-                bank = BankUrl(url=url_attr[0].extract())
+                given_url = url_attr[0].extract()
+                domain = utils.urlToDomain(given_url)
+                bank = BankUrl(given_url=given_url, domain=domain)
             bank['title'] = opt.select("text()")[0].extract()
             items.append(bank)
 

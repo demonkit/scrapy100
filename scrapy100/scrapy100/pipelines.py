@@ -27,7 +27,10 @@ class Scrapy100Pipeline(object):
     def _processWebSite(self, item, spider):
         session = self.Session()
         try:
-            web_site = models.WebSite.get(session, url=item['url'])
+            web_site = models.WebSite.getByGivenUrl(session, given_url=item['given_url'])
+            if 'req_url' in item:
+                web_site.req_url = item['req_url']
+            web_site.resp_code = item['resp_code']
             web_site.desc=json.dumps(item['desc'])
             web_site.scrap_done = 1
             for kw in item['keywords']:
@@ -37,7 +40,7 @@ class Scrapy100Pipeline(object):
             session.commit()
         except Exception, e:
             session.rollback()
-            raise DropItem("db error, drop url: %s, since: %s" % (item['url'], e))
+            raise DropItem("db error, drop url: %s, since: %s" % (item['given_url'], e))
         finally:
             session.close()
         return item
@@ -46,6 +49,7 @@ class Scrapy100Pipeline(object):
         session = self.Session()
         try:
             web_site = models.WebSite(domain=item['domain'])
+            web_site.given_url = item['given_url']
             web_site.title=item['title']
             web_site.scrap_done = 0
             session.add(web_site)

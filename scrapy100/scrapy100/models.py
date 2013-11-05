@@ -33,10 +33,10 @@ class WebSite(DeclarativeBase):
     domain = sqlalchemy.Column('domain', sqlalchemy.String(256))
     title = sqlalchemy.Column('title', sqlalchemy.String(1000), nullable=True)
 
-    req_url = sqlalchemy.Column('req_url', sqlalchemy.String(1024))
-    resp_code = sqlalchemy.Column(sqlalchemy.Integer)
+    given_url = sqlalchemy.Column('given_url', sqlalchemy.String(1024))
+    resp_code = sqlalchemy.Column('resp_code', sqlalchemy.Integer)
     # if spider gets a redirect status, url field will be set
-    url = sqlalchemy.Column('url', sqlalchemy.String(1024))
+    req_url = sqlalchemy.Column('url', sqlalchemy.String(1024))
     desc = sqlalchemy.Column('desc', sqlalchemy.String(10000), nullable=True)
     scrap_done = sqlalchemy.Column('done', sqlalchemy.Integer, default=0)
 
@@ -46,8 +46,16 @@ class WebSite(DeclarativeBase):
         self.domain = domain
 
     @staticmethod
-    def get(session, domain):
+    def getByDomain(session, domain):
         return session.query(WebSite).filter(WebSite.domain==domain).first()
+
+    @staticmethod
+    def getByGivenUrl(session, given_url):
+        return session.query(WebSite).filter(WebSite.given_url==given_url).first()
+
+    @staticmethod
+    def getByReqUrl(session, req_url):
+        return session.query(WebSite).filter(WebSite.req_url==req_url).first()
 
 
 class Keyword(DeclarativeBase):
